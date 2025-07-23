@@ -22,12 +22,12 @@ This project demonstrates:
 
 ### **Option 2: Declarative Setup (DB-less)**
 ```bash
-./setup-kong-httpbin-declarative.sh
+docker compose -f kong.yaml up -d
 ```
 
-Both scripts will:
+The setup script will:
 - ✅ Clean up existing containers
-- ✅ Start Kong + HTTPBin + Express.js + PostgreSQL (if needed)
+- ✅ Start Kong + HTTPBin + Express.js + PostgreSQL
 - ✅ Configure services, routes, and plugins
 - ✅ **Automatically add custom logging plugin**
 - ✅ Run comprehensive tests
@@ -377,7 +377,6 @@ kong-custom-plugin/
 ├── kong.yaml                      # DB-less setup
 ├── Dockerfile.kong-custom         # Custom Kong image with plugin
 ├── setup-and-test-kong-httpbin.sh # Database-backed setup script
-├── setup-kong-httpbin-declarative.sh # Declarative setup script
 └── docs/
     ├── KONG_CUSTOM_PLUGIN_GUIDE.md      # Plugin development guide
     ├── KONG_CONFIGURATION_APPROACHES.md  # Configuration comparison
