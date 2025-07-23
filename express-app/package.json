@@ -1,0 +1,12 @@
+{
+  "name": "express-api",
+  "version": "1.0.0",
+  "description": "Simple Express API for Kong testing",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

@@ -1,0 +1,187 @@
+_format_version: "3.0"
+services:
+  - name: httpbin-service
+    url: http://httpbin:80
+    connect_timeout: 60000
+    enabled: true
+    host: httpbin
+    port: 80
+    protocol: http
+    read_timeout: 60000
+    retries: 5
+    routes:
+      - name: httpbin-route
+        paths:
+          - /httpbin
+        https_redirect_status_code: 426
+        path_handling: v0
+        preserve_host: false
+        protocols:
+          - http
+          - https
+        regex_priority: 0
+        strip_path: true
+
+  - name: express-service
+    url: http://express-app:3000
+    connect_timeout: 60000
+    enabled: true
+    host: express-app
+    port: 3000
+    protocol: http
+    read_timeout: 60000
+    retries: 5
+    routes:
+      - name: express-route
+        paths:
+          - /express
+        https_redirect_status_code: 426
+        path_handling: v0
+        preserve_host: false
+        protocols:
+          - http
+          - https
+        regex_priority: 0
+        strip_path: true
+
+# For basic auth - As this is an auth plugin, you need to create a consumer and attach a credential to it.
+consumers:
+- username: USER123
+  custom_id: SOME_CUSTOM_ID
+
+basicauth_credentials:
+- consumer: USER123
+  username: Aladdin
+  password: OpenSesame
+
+keyauth_credentials:
+- consumer: USER123
+  key: hello_world # THIS IS THE PASSWORD!
+
+
+plugins:
+  - name: cors
+    service: httpbin-service
+    config:
+      origins:
+      - "*" # Allow all origins
+      methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      headers:
+      - Accept
+      - Accept-Version
+      - Content-Length
+      - Content-MD5
+      - Content-Type
+      - Date
+      - X-Auth-Token
+      exposed_headers:
+      - X-Auth-Token
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    service: httpbin-service
+    config:
+      minute: 5
+      hour: 100
+      policy: local
+
+  - name: ip-restriction
+    service: httpbin-service
+    config:
+      allow:
+      # - 54.13.21.1 # This is a random address - if you have it enable, you should not be able to access
+      - 172.18.0.0/24 # This should allow docker network ip range - /24 CIDR
+      - 127.0.0.1 # Allow localhost
+
+  # - name: bot-detection
+  #   service: httpbin-service
+  #   config:
+  #     deny:
+  #     - "(C)|(c)hrome" # this should block chrome
+  #     # Test this by overriding the user agent in postman to chrome
+
+  # - name: basic-auth
+  #   service: httpbin-service
+  #   config:
+  #     hide_credentials: true
+
+  # - name: key-auth
+  #   service: httpbin-service
+  #   config:
+  #     key_names:
+  #     - apikey # This is the name of the header that will be used to send the API key
+  #     # http://localhost:8000/get?apikey=hello_world - Success!
+  #     key_in_query: true
+  #     # key_in_body: true
+  #     # key_in_header: true
+
+  # - name: request-termination
+  #   service: httpbin-service
+  #   config:
+  #     status_code: 403
+  #     message: "You are not allowed to access this resource"
+  #     trigger: "q" # This is the trigger for the request termination - if passed in q params, it will terminate the request
+
+  - name: request-size-limiting
+    service: httpbin-service
+    config:
+      allowed_payload_size: 10
+      size_unit: kilobytes
+
+  # Express service plugins
+  - name: cors
+    service: express-service
+    config:
+      origins:
+      - "*" # Allow all origins
+      methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      headers:
+      - Accept
+      - Accept-Version
+      - Content-Length
+      - Content-MD5
+      - Content-Type
+      - Date
+      - X-Auth-Token
+      exposed_headers:
+      - X-Auth-Token
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    service: express-service
+    config:
+      minute: 10
+      hour: 200
+      policy: local
+
+  # Custom request-response logger plugin for HTTPBin
+  - name: request-response-logger
+    service: httpbin-service
+    config:
+      log_endpoint: http://express-app:3000/logs
+      timeout: 10000
+      keepalive: 60000
+      log_request_body: true
+      log_response_body: true
+      max_body_size: 1024
+
+  # Custom request-response logger plugin for Express.js
+  - name: request-response-logger
+    service: express-service
+    config:
+      log_endpoint: http://express-app:3000/logs
+      timeout: 10000
+      keepalive: 60000
+      log_request_body: true
+      log_response_body: true
+      max_body_size: 1024

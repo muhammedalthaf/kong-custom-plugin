@@ -1,0 +1,14 @@
+FROM kong:3.5.0
+
+# Switch to root to install plugins
+USER root
+
+# Copy custom plugins
+COPY kong-plugins /usr/local/share/lua/5.1/kong/plugins/
+
+# Create plugin directory and set permissions
+RUN mkdir -p /usr/local/share/lua/5.1/kong/plugins/request-response-logger && \
+    chown -R kong:kong /usr/local/share/lua/5.1/kong/plugins/
+
+# Switch back to kong user
+USER kong

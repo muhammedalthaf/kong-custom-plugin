@@ -1,0 +1,56 @@
+services:
+  # HTTPBin service - a simple HTTP testing service
+  httpbin:
+    image: kennethreitz/httpbin
+    container_name: httpbin
+    ports:
+      - "8080:80"
+    networks:
+      - kong-net
+
+  # Express.js API service
+  express-app:
+    build: ./express-app
+    container_name: express-app
+    ports:
+      - "3000:3000"
+    networks:
+      - kong-net
+
+  kong:
+      build:
+        context: .
+        dockerfile: Dockerfile.kong-custom
+      volumes:
+        - ./config/kong.yaml:/etc/kong/kong.yaml
+      container_name: kong
+      depends_on:
+        - httpbin
+        - express-app
+      environment:
+        KONG_DATABASE: off
+        KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yaml
+        KONG_ADMIN_LISTEN: 0.0.0.0:8001
+        KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+        KONG_ADMIN_GUI_URL: http://localhost:8002
+        KONG_PLUGINS: bundled,request-response-logger
+      ports:
+        - "8000:8000/tcp"
+        - "8443:8443/tcp"
+        - "8001:8001/tcp"
+        - "8002:8002/tcp"
+        - "8444:8444/tcp"
+        - "127.0.0.1:7990:8001/tcp"
+      networks:
+        - kong-net
+        # KONG_DATABASE: postgres
+        # KONG_PG_HOST: kong-database
+        # KONG_PG_PASSWORD: kong
+        # KONG_PASSWORD: kongadmin
+        # KONG_ADMIN_LISTEN: 0.0.0.0:8001
+        # KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+        # KONG_ADMIN_GUI_URL: http://localhost:8002
+
+networks:
+  kong-net:
+    driver: bridge
